@@ -10,15 +10,7 @@ var app = express();
 
 var Times = require("./model.js");
 
-//database configuration
-// var databaseURL = "scraper";
-// var collections = ["scrapedData"];
-
-// var db = mongojs(databaseURL,collections);
-
-// db.on("error", function(error){
-//     console.log("Database Error: ", error);
-// });
+var newArticle;
 
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
@@ -39,14 +31,9 @@ app.get("/", function(req,res){
 });
 
 app.get("/all",function(req,res){
-    db.articles.find({},function(error, found){
-        if(error){
-            console.log(error);
-        }
-        else{
-            res.json(found);
-        }
-    });
+   Times.find(function(err,articles){
+       if(err) return console.error(err);
+   })
 });
 
 app.get("/scrape", function(req,res){
@@ -64,19 +51,18 @@ app.get("/scrape", function(req,res){
                 link:link,
             });
             
-            var newArticle = new Times ({title: title, link:link});
+            newArticle = new Times ({title: title, link:link});
             
             newArticle.save(function(err,newArticle){
                 if(err) return console.error(err);
             });
 
-        
             console.log("THIS IS A NEW ARTICLE: " + newArticle);
         })
        
     });
     res.send("Scrape Complete");
-
+    console.log("TEEEEESSSTTT" + newArticle);
 });
 
 //Listen to port
