@@ -31,8 +31,12 @@ app.get("/", function(req,res){
 });
 
 app.get("/all",function(req,res){
-   Times.find(function(err,articles){
-       if(err) return console.error(err);
+   Times.find({})
+   .then(function(dbArticle){
+       res.json(dbArticle);
+   })
+   .catch(function(err){
+       res.json(err);
    })
 });
 
