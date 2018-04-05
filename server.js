@@ -29,6 +29,7 @@ mongoose.connect("mongodb://localhost/laTimesdb");
 //Main route
 app.get("/", function(req,res){
     res.send("Hello World");
+    res.render("index.html");
 });
 
 app.get("/articles",function(req,res){
@@ -67,10 +68,9 @@ app.get("/scrape", function(req,res){
        
     });
     res.send("Scrape Complete");
-    console.log("TEEEEESSSTTT" + newArticle);
 });
 
-app.get("/:id",function(req,res){
+app.get("articles/:id",function(req,res){
     Times.findOne({_id: req.params.id})
     .populate("note")
     .then(function(dbArticle){
@@ -81,10 +81,10 @@ app.get("/:id",function(req,res){
     })
 });
 
-app.post("/:id",function(req,res){
+app.post("articles/:id",function(req,res){
     Note.create(req.body)
         .then(function(dbNote){
-            return Times.findOneAndUpdate({_id:req.params.id},{note:dbNote._id},{new:true});
+            return Times.findOneAndUpdate({_id:req.params.id}, {note:dbNote._id},{new:true});
         })
         .then(function(dbArticle){
             res.json(dbArticle);
@@ -93,6 +93,33 @@ app.post("/:id",function(req,res){
             res.json(err);
         });
 });
+
+app.post("/submit", function(req,res){
+    Note.create(req.body)
+    .then(function(dbNote){
+        return Times.findOneAndUpdate({}, { $push: { notes: dbNote._id } }, { new: true });
+    })
+    .then(function(dbUser){
+        res.json(dbUser);
+    })
+    .catch(function(err){
+        res.json(err);
+    })
+})
+
+app.get("/notes", function(req,res){
+    Note.find({})
+    //all notes
+        .then(function(dbNote){
+            res.json(dbNote);
+        })
+        .catch(function(err){
+            res.json(err);
+        });
+})
+
+
+
 
 //Listen to port
 app.listen(3000,function(){
