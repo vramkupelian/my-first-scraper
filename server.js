@@ -8,14 +8,14 @@ var bodyParser = require("body-parser");
 //initialize express
 var app = express();
 
-var Times = require("./model.js");
+var Times = require("./models/times.js");
+var Note = require("./models/Note.js");
 
 var newArticle;
 
 var db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 db.once('open', function() {
-  // we're connected!
   console.log("We're connected");
 });
 
@@ -23,6 +23,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 app.use(express.static("public"));
 
+mongoose.Promise = Promise;
 mongoose.connect("mongodb://localhost/laTimesdb");
 
 //Main route
@@ -30,7 +31,7 @@ app.get("/", function(req,res){
     res.send("Hello World");
 });
 
-app.get("/all",function(req,res){
+app.get("/articles",function(req,res){
    Times.find({})
    .then(function(dbArticle){
        res.json(dbArticle);
@@ -67,6 +68,30 @@ app.get("/scrape", function(req,res){
     });
     res.send("Scrape Complete");
     console.log("TEEEEESSSTTT" + newArticle);
+});
+
+app.get("/:id",function(req,res){
+    Times.findOne({_id: req.params.id})
+    .populate("note")
+    .then(function(dbArticle){
+        res.json(dbArticle);
+    })
+    .catch(function(err){
+        res.json(err);
+    })
+});
+
+app.post("/:id",function(req,res){
+    Note.create(req.body)
+        .then(function(dbNote){
+            return Times.findOneAndUpdate({_id:req.params.id},{note:dbNote._id},{new:true});
+        })
+        .then(function(dbArticle){
+            res.json(dbArticle);
+        })
+        .catch(function(err){
+            res.json(err);
+        });
 });
 
 //Listen to port
