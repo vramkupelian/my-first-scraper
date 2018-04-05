@@ -2,18 +2,36 @@ var cheerio = require("cheerio");
 var request = require("request");
 var mongojs = require("mongojs");
 var express = require("express");
+var mongoose = require("mongoose");
+var bodyParser = require("body-parser");
 
 //initialize express
 var app = express();
 
-//database configuration
-var databaseURL = "scraper";
-var collections = ["scrapedData"];
+var Times = require("./model.js");
 
-var db = mongojs(databaseURL,collections);
-db.on("error", function(error){
-    console.log("Database Error: ", error);
+//database configuration
+// var databaseURL = "scraper";
+// var collections = ["scrapedData"];
+
+// var db = mongojs(databaseURL,collections);
+
+// db.on("error", function(error){
+//     console.log("Database Error: ", error);
+// });
+
+var db = mongoose.connection;
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function() {
+  // we're connected!
+  console.log("We're connected");
 });
+
+app.use(bodyParser.urlencoded({extended: true}));
+
+app.use(express.static("public"));
+
+mongoose.connect("mongodb://localhost/laTimesdb");
 
 //Main route
 app.get("/", function(req,res){
@@ -21,7 +39,7 @@ app.get("/", function(req,res){
 });
 
 app.get("/all",function(req,res){
-    db.scrapedData.find({},function(error, found){
+    db.articles.find({},function(error, found){
         if(error){
             console.log(error);
         }
@@ -32,12 +50,12 @@ app.get("/all",function(req,res){
 });
 
 app.get("/scrape", function(req,res){
+    //scrape portion
     request("http://www.latimes.com/", function(error, response, html) {
 
     var $ = cheerio.load(html);
-
     var results = [];
-
+    
         $("h5").each(function(i, element) {   
             var title = $(element).text();
             var link = $(element).children().attr('href');
@@ -45,11 +63,20 @@ app.get("/scrape", function(req,res){
                 title: title,
                 link:link,
             });
-        });
-    console.log(results);
-    });
+            
+            var newArticle = new Times ({title: title, link:link});
+            
+            newArticle.save(function(err,newArticle){
+                if(err) return console.error(err);
+            });
 
+        
+            console.log("THIS IS A NEW ARTICLE: " + newArticle);
+        })
+       
+    });
     res.send("Scrape Complete");
+
 });
 
 //Listen to port
