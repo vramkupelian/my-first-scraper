@@ -3,20 +3,56 @@ var request = require("request");
 var mongojs = require("mongojs");
 var express = require("express");
 
-// Make a request call to grab the HTML body from the site of your choice
-request("http://www.latimes.com/", function(error, response, html) {
+//initialize express
+var app = express();
 
-  var $ = cheerio.load(html);
+//database configuration
+var databaseURL = "scraper";
+var collections = ["scrapedData"];
 
-  var results = [];
+var db = mongojs(databaseURL,collections);
+db.on("error", function(error){
+    console.log("Database Error: ", error);
+});
 
-    $("h5").each(function(i, element) {   
-        var title = $(element).text();
-        var link = $(element).children().attr('href');
-        results.push({
-            title: title,
-            link:link,
-        });
+//Main route
+app.get("/", function(req,res){
+    res.send("Hello World");
+});
+
+app.get("/all",function(req,res){
+    db.scrapedData.find({},function(error, found){
+        if(error){
+            console.log(error);
+        }
+        else{
+            res.json(found);
+        }
     });
-  console.log(results);
+});
+
+app.get("/scrape", function(req,res){
+    request("http://www.latimes.com/", function(error, response, html) {
+
+    var $ = cheerio.load(html);
+
+    var results = [];
+
+        $("h5").each(function(i, element) {   
+            var title = $(element).text();
+            var link = $(element).children().attr('href');
+            results.push({
+                title: title,
+                link:link,
+            });
+        });
+    console.log(results);
+    });
+
+    res.send("Scrape Complete");
+});
+
+//Listen to port
+app.listen(3000,function(){
+    console.log("App running on port 3000");
 });
