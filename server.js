@@ -73,7 +73,7 @@ app.get("/scrape", function(req,res){
 //find specific article by id, populate with note
 app.get("/articles/:id",function(req,res){
     Times.findOne({_id: req.params.id})
-    .populate("Note")
+    .populate("notes")
     .then(function(dbArticle){
         console.log(dbArticle);
         res.json(dbArticle);
