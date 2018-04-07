@@ -7,7 +7,6 @@ $.getJSON("/articles", function(data) {
     }
   });
   
-  
   // Whenever someone clicks a p tag
   $(document).on("click", "p", function() {
     // Empty the notes from the note section
@@ -50,12 +49,15 @@ $.getJSON("/articles", function(data) {
     // Run a POST request to change the note, using what's entered in the inputs
     $.ajax({
       method: "POST",
-      url: "/articles/" + thisId,
+      url: "/articles/",
       data: {
         // Value taken from title input
         title: $("#titleinput").val(),
         // Value taken from note textarea
-        body: $("#bodyinput").val()
+        body: $("#bodyinput").val(),
+
+        _articleId: thisId ,
+
       }
     })
       // With that done

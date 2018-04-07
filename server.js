@@ -32,6 +32,7 @@ app.get("/", function(req,res){
     res.render("index.html");
 });
 
+//all articles
 app.get("/articles",function(req,res){
    Times.find({})
    .then(function(dbArticle){
@@ -42,8 +43,8 @@ app.get("/articles",function(req,res){
    })
 });
 
+//scrape
 app.get("/scrape", function(req,res){
-    //scrape portion
     request("http://www.latimes.com/", function(error, response, html) {
 
     var $ = cheerio.load(html);
@@ -69,11 +70,12 @@ app.get("/scrape", function(req,res){
     });
     res.send("Scrape Complete");
 });
-
-app.get("articles/:id",function(req,res){
+//find specific article by id, populate with note
+app.get("/articles/:id",function(req,res){
     Times.findOne({_id: req.params.id})
-    .populate("note")
+    .populate("Note")
     .then(function(dbArticle){
+        console.log(dbArticle);
         res.json(dbArticle);
     })
     .catch(function(err){
@@ -81,19 +83,21 @@ app.get("articles/:id",function(req,res){
     })
 });
 
-app.post("articles/:id",function(req,res){
+//saving/updating article's note
+app.post("/articles/",function(req,res){
     Note.create(req.body)
-        .then(function(dbNote){
-            return Times.findOneAndUpdate({_id:req.params.id}, {note:dbNote._id},{new:true});
-        })
-        .then(function(dbArticle){
-            res.json(dbArticle);
+        // .then(function(dbNote){
+        //     return Times.findOneAndUpdate({_id:req.params.id}, {note:dbNote._id},{new:true});
+        // })
+        .then(function(newNote ){
+            res.json(newNote);
         })
         .catch(function(err){
             res.json(err);
         });
 });
 
+//save new note to db and attempts to associate with article
 app.post("/submit", function(req,res){
     Note.create(req.body)
     .then(function(dbNote){
@@ -117,9 +121,6 @@ app.get("/notes", function(req,res){
             res.json(err);
         });
 })
-
-
-
 
 //Listen to port
 app.listen(3000,function(){
